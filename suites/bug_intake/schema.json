@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "required": ["is_bug", "reproducible", "missing", "comment"],
+  "additionalProperties": false,
+  "properties": {
+    "is_bug": {"type": "boolean"},
+    "reproducible": {"type": "boolean"},
+    "missing": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"enum": ["steps_to_reproduce", "expected_result", "actual_result", "environment"]}
+    },
+    "comment": {"type": "string", "minLength": 1, "maxLength": 600}
+  }
+}
