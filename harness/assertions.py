@@ -1,7 +1,8 @@
 import json
 from dataclasses import dataclass
 from functools import lru_cache
-
+import re
+from harness.model import call_model
 import jsonschema
 
 
@@ -94,3 +95,35 @@ def check_similarity(text, reference, min_score):
         similarity,
         f"similarity {similarity} (min {min_score})",
     )
+
+JUDGE_SYSTEM = "You are a strict, fair grader."
+
+JUDGE_PROMPT = """You grade one message that an AI assistant wrote for a QA team.
+
+Criteria:
+{criteria}
+
+Message:
+<<<
+{text}
+>>>
+
+Score it from 1 to 5:
+5 = meets every criterion
+4 = meets the criteria with one minor flaw
+3 = partly meets them
+2 = mostly misses them
+1 = misses them completely
+
+Reply in exactly this format and nothing else:
+SCORE: <number>
+REASON: <one sentence>"""
+
+
+def check_judge(text, criteria, min_score, model, call=call_model):
+    reply = call(JUDGE_SYSTEM, JUDGE_PROMPT.format(criteria=criteria, text=text), model)
+    match = re.search(r"SCORE:\s*([1-5])", reply)
+    if not match:
+        return CheckResult("judge", False, 0.0, f"unparseable judge reply: {reply[:100]}")
+    n = int(match.group(1))
+    return CheckResult("judge", n >= min_score, n / 5, reply.strip())
