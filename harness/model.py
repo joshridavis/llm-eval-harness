@@ -9,8 +9,8 @@ def call_model(prompt, user_input, model):
         _client = anthropic.Anthropic()      # reads ANTHROPIC_API_KEY
     response = _client.messages.create(
         model=model,
-        max_tokens=1024,
+        max_tokens=4096,
         system=prompt,
         messages=[{"role": "user", "content": user_input}],
     )
-    return response.content[0].text
+    return "".join(b.text for b in response.content if b.type == "text")
