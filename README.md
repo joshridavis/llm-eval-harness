@@ -1,14 +1,12 @@
-
 # llm-eval-harness
 
 [![CI](https://github.com/joshridavis/llm-eval-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/joshridavis/llm-eval-harness/actions/workflows/ci.yml)
 
 ## Why this exists
 
-Teams shipping LLM features have no regression suite. When the prompt changes,
-or the model version changes, or the temperature drifts, nobody finds out until
-a customer does. Traditional assertions don't work: the output is different every
-time and still correct.
+Teams shipping LLM features have no regression suite. When the prompt changes or
+the model version changes, nobody finds out until a customer does. Traditional
+assertions don't work: the output is different every time and still correct.
 
 This harness applies test engineering to non-deterministic systems: property-based
 assertions instead of exact matching, variance measurement instead of single runs,
@@ -43,22 +41,38 @@ user's password, and a report with a stack trace.
 
 ## Run it
 
+Install (Windows: skip the first line, the PyPI build of torch is already CPU-only):
+
 ```
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements.txt
-setx ANTHROPIC_API_KEY "your-key"
+```
+
+Set your Anthropic API key as `ANTHROPIC_API_KEY`, then:
+
+```
 python -m harness run --suite bug_intake --prompt v1 --model <model-id> --judge-model <model-id> --runs 5 --out results/v1-haiku.json
 python -m harness compare results/v1-haiku.json results/v2-haiku.json --report results/report.md
 ```
 
 ## Results
 
+5 runs per case, Claude Sonnet 5.5 as the judge.
+
+**Findings**
+
+- **The gate catches a bad prompt change.** The shortened prompt v2 failed the
+  schema check on every run of every case: the model's JSON no longer matched the
+  contract the downstream code relies on. `compare` exits 1.
+- **Haiku is flaky where Sonnet isn't.** With prompt v1, Haiku passed
+  `vague-report` and `no-expected-or-actual` in 4 of 5 runs.
+  REPLACE THIS SENTENCE WITH THE REASON FROM THE CHECK COMMAND.
+  A single run would have reported both as passing. Sonnet passed every case on every run.
+
 ### Prompt v1 vs the shortened prompt v2 (same model)
 
-# Eval report: bug_intake
-
-- Baseline: prompt v1, model claude-haiku-5-5, 5 runs per case
-- Candidate: prompt v2, model claude-haiku-5-5, 5 runs per case
+- Baseline: prompt v1, model claude-haiku-5-5
+- Candidate: prompt v2, model claude-haiku-5-5
 
 **Result: 8 regression(s)**
 
@@ -75,10 +89,8 @@ python -m harness compare results/v1-haiku.json results/v2-haiku.json --report r
 
 ### Model upgrade: Haiku vs Sonnet (same prompt)
 
-# Eval report: bug_intake
-
-- Baseline: prompt v1, model claude-haiku-5-5, 5 runs per case
-- Candidate: prompt v1, model claude-sonnet-5-5, 5 runs per case
+- Baseline: prompt v1, model claude-haiku-5-5
+- Candidate: prompt v1, model claude-sonnet-5-5
 
 **Result: no regressions**
 
@@ -111,4 +123,3 @@ stay local, so CI needs no API key.
 ## Author
 
 Jonathan Davis, SDET and AI automation engineer · [LinkedIn](https://linkedin.com/in/jonathanda)
-
