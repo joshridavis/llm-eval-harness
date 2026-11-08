@@ -4,6 +4,8 @@ import sys
 from pathlib import Path
 
 from harness.cases import load_suite
+from harness.compare import compare, has_regression
+from harness.report import render_report
 from harness.runner import run_suite
 
 
@@ -19,6 +21,11 @@ def main():
     run.add_argument("--runs", type=int, default=5)
     run.add_argument("--out", required=True)
 
+    cmp = sub.add_parser("compare")
+    cmp.add_argument("baseline")
+    cmp.add_argument("candidate")
+    cmp.add_argument("--report", required=True)
+
     args = parser.parse_args()
 
     if args.command == "run":
@@ -28,6 +35,14 @@ def main():
         for case in result["cases"]:
             print(f"{case['verdict']:<12} {case['pass_rate']:.0%}  {case['id']}")
         return 0
+
+    baseline = json.loads(Path(args.baseline).read_text(encoding="utf-8"))
+    candidate = json.loads(Path(args.candidate).read_text(encoding="utf-8"))
+    diffs = compare(baseline, candidate)
+    Path(args.report).write_text(render_report(baseline, candidate, diffs), encoding="utf-8")
+    for d in diffs:
+        print(f"{d['status']:<11} {d['id']}")
+    return 1 if has_regression(diffs) else 0
 
 
 if __name__ == "__main__":
