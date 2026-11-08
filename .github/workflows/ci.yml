@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements.txt
+
+      - name: Unit tests
+        run: pytest -q
+
+      - name: Regression gate catches the known-bad prompt (v2)
+        run: |
+          set +e
+          python -m harness compare results/v1-haiku.json results/v2-haiku.json --report results/report.md
+          code=$?
+          set -e
+          if [ "$code" -ne 1 ]; then
+            echo "The gate did not flag prompt v2 as a regression"
+            exit 1
+          fi
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: results/report.md
