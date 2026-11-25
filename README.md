@@ -66,7 +66,8 @@ python -m harness compare results/v1-haiku.json results/v2-haiku.json --report r
   contract the downstream code relies on. `compare` exits 1.
 - **Haiku is flaky where Sonnet isn't.** With prompt v1, Haiku passed
   `vague-report` and `no-expected-or-actual` in 4 of 5 runs.
-  REPLACE THIS SENTENCE WITH THE REASON FROM THE CHECK COMMAND.
+  Both failures dropped the same item, the actual result: once the reply to the reporter
+  never asked for it, and once the model left it off the missing list.
   A single run would have reported both as passing. Sonnet passed every case on every run.
 
 ### Prompt v1 vs the shortened prompt v2 (same model)
